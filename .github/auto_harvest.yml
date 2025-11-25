@@ -1,0 +1,33 @@
+name: Auto Harvest DOJ Data
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # weekly run
+  workflow_dispatch:      # manual run
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install requirements
+        run: pip install -r requirements.txt
+
+      - name: Run Harvester
+        run: python harvest_dojo.py --urls doj_urls.txt --out data/harvested_cases.csv
+
+      - name: Commit & push results
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data/harvested_cases.csv
+          git commit -m "Auto-update harvested DOJ cases" || echo "No changes"
+          git push
